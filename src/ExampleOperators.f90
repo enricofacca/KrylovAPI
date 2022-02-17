@@ -1,6 +1,10 @@
 module ExampleOperators
-  use AbstractOperator
+  use Precision
+  use AbstractOperators
+  use SimpleVectors
+
   private
+
   !! Derived type describing the 1d-Laplacian
   !! with periodic boundary conditions
   type, public, extends(abstract_operator) :: Laplacian
@@ -22,6 +26,11 @@ module ExampleOperators
   end type DiagonalMatrix
 
 contains
+
+  
+
+
+  
   subroutine init_LP(this, nnode)
     class(Laplacian),                intent(inout) :: this
     integer,                          intent(in   ) :: nnode

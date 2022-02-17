@@ -14,12 +14,13 @@
 !! savings are small and compromise readibility and flexibility of the
 !! approach.
 
-module AbstractOperator
+module AbstractOperators
   !! Module containg the abstract class parent of
-  !! all operator classes.
+  !! all operator classes defined on standard Fortran Vector
+  use SimpleVectors
   implicit none
   public :: abstract_operator, application
-  
+  public :: eye
   type, abstract :: abstract_operator
      !! Abstract type defining base general operator
 
@@ -65,27 +66,22 @@ module AbstractOperator
      end subroutine application
   end interface
 
-  
+
   !! identity operator
-  type, public,extends(abstract_operator) :: eye
+  type, public, extends(abstract_operator) :: eye
    contains
      !! constructor
      procedure, public, pass :: init => init_eye
      !! procedure to be overrided 
      procedure, public, pass :: apply =>  apply_eye
   end type eye
-
-  interface apply_eye
-     apply_eye_pour
-     apply_eye_rich
-  end interface apply_eye
 contains
 
-  !! set identity dimensions
+    !! set identity dimensions
   subroutine init_eye(this,size)
     implicit none
     class(eye),     intent(inout) :: this
-    integer,            intent(in   ) :: size
+    integer,        intent(in   ) :: size
    
     !! the set domain/codomain operator dimension
     this%nrow = size
@@ -103,9 +99,19 @@ contains
     real(kind=double), intent(inout) :: vec_out(this%nrow)
     integer,           intent(inout) :: ierr
 
+    ! using basic linear algebra operation defined in SimpleVector module
+    call d_axpby(this%nrow,one,vec_in,zero,vec_out)
+
+    ! or we can simply use a procedure assocaite with standard Fortran vector
     vec_out=vec_in
+    
     ierr=0
   end subroutine apply_eye
+
+  
+
+
+  
   
      
-end module AbstractOperator
+end module AbstractOperators

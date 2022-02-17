@@ -1,5 +1,5 @@
 module KrylovSolver  
-  use AbstractOperator
+  use AbstractOperators
   private
   public :: pcg
   !! Derived type decscribing the operator
@@ -24,7 +24,8 @@ module KrylovSolver
 contains
   subroutine pcg(matrix,rhs,sol,ierr,&
        tolerance,max_iterations,preconditioner,aux_passed)
-    use AbstractOperator
+    use AbstractOperators
+    use SimpleVectors
     implicit none
     class(abstract_operator),           intent(inout) :: matrix
     real(kind=double),                  intent(in   ) :: rhs(matrix%ncol)
@@ -55,7 +56,7 @@ contains
     real(kind=double), pointer :: axp(:), pres(:), ainv(:), resid(:), pk(:),scr(:)
     real(kind=double) :: alpha, beta, presnorm,resnorm,bnorm
     real(kind=double) :: ptap
-    real(kind=double) :: dnrm2,ddot,normres
+    real(kind=double) :: normres
     real(kind=double) :: tol,rort
     real(kind=double) :: inverse_residum_weight
     !
@@ -135,7 +136,7 @@ contains
     
     exit_test = .false.
     ! compute rhs norm and break cycle 
-    bnorm = dnrm2(nequ,rhs,1)
+    bnorm = d_norm(nequ,rhs)
     if (bnorm<1.0d-16) then
        ierr=0
        sol=zero
@@ -150,7 +151,7 @@ contains
     ! calculate initial residual (res = rhs-M*sol)
     call matrix%apply(sol,resid,ierr)
     resid = rhs - resid
-    resnorm = dnrm2(nequ,resid,1)/bnorm
+    resnorm = d_norm(nequ,resid)/bnorm
     
     !
     ! cycle
@@ -165,26 +166,25 @@ contains
        if (iter.eq.1) then
           beta = zero
        else
-          beta = -ddot(nequ,pres,1,axp,1)/ptap
+          beta = -d_scalar_product(nequ,pres,axp)/ptap
        end if
 
        !  calculates p_{k+1}:=pres_{k}+beta_{k}*p_{k}
-       pk = pres + beta * pk
-       !call dxpay(nequ,pres,1,beta,pk,1)
+       call d_axpby(nequ,one,pres,beta,pk)
           
        !  calculates axp_{k+1}:= matrix * p_{k+1}
        call matrix%apply(pk,axp,ierr)
        
        !  calculates \alpha_k
-       ptap  = ddot(nequ,pk,1,axp,1)
-       alpha = ddot(nequ,pk,1,resid,1)/ptap
+       ptap  = d_scalar_product(nequ,pk,axp)
+       alpha = d_scalar_product(nequ,pk,resid)/ptap
        
        !  calculates x_k+1 and r_k+1
-       call daxpy(nequ,alpha,pk,1,sol,1)
-       call daxpy(nequ,-alpha,axp,1,resid,1)
+       call d_axpby(nequ,alpha,pk,one,sol)
+       call d_axpby(nequ,-alpha,axp,one,resid)
 
        !  compute residum
-       resnorm = dnrm2(nequ,resid,1)/bnorm
+       resnorm = d_norm(nequ,resid)/bnorm
      
        ! checks
        exit_test = (&
@@ -203,7 +203,6 @@ contains
   
   subroutine init_solver(this,&
        matrix, max_iter, tolerance, precondtioner)
-    use AbstractOperator
     class(pcg_solver),                intent(inout) :: this
     class(abstract_operator), target, intent(in   ) :: matrix
     integer,                          intent(in   ) :: max_iter
@@ -272,26 +271,4 @@ contains
          aux_passed=this%aux)
 
   end subroutine apply_pcg_solver
-
-  subroutine dxpay(n,dx,incx,da,dy,incy)
-    !
-    !     constant times a vector plus a vector.
-    !     y:=x+a*y
-    !     uses unrolled loops for increments equal to one.
-    !     jack dongarra, linpack, 3/11/78.
-    !     modified 12/3/93, array(1) declarations changed to array(*)
-    !
-    
-    implicit none
-    integer :: i,incx,incy,ix,iy,m,mp1,n
-    real(kind=double) ::  dx(n),dy(n),da
-    
-    if ( ( incx .ne. 1) .or. (incy .ne. 1) )  then
-       write(*,*) 'x or y increment not equal 1'
-       stop
-    end if
-    dy=dx+da*dy
-
-  end subroutine dxpay
-  
 end module KrylovSolver

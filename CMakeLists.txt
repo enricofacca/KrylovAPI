@@ -77,26 +77,26 @@ else()
   message(STATUS "DIRECTORY PATH  FOR BLAS ${BLAS_DIR}")
 endif()
 
-# LOOK FOR LAPACK LIBRARY
-# SETTING VARIABLES:
-# LAPACK_LIB, LAPACK_DIR
-if ( NOT DEFINED LAPACK_DIR)
-  message(STATUS "LOOKING FOR LAPACK LIBRARIES")
-  find_package(LAPACK REQUIRED)
-  if (LAPACK_FOUND)
-    message(VERBOSE "LAPACK LIBRARIES: ${LAPACK_LIBRARIES}")
-    list(GET LAPACK_LIBRARIES 0 LAPACK_LIB)
-    message(VERBOSE "LAPACK LIB SELECTED: ${LAPACK_LIB}")
-    get_filename_component(LAPACK_DIR "${LAPACK_LIB}" DIRECTORY)
-  else()
-    # print error message
-    MESSAGE( SEND_ERROR  "+ LAPACK LIBRARY NOT FOUND: Pass the full path of the directory containg it with" )
-    MESSAGE( SEND_ERROR  "+ -DLAPACK_DIR= absolute path for lapack ")
-    MESSAGE( FATAL_ERROR "++++++++++++++++++++++++++++++++++++++++++++++" )
-  endif()
-else()
-  message(STATUS "DIRECTORY PATH FOR LAPACK: ${LAPACK_DIR}")
-endif()
+# # LOOK FOR LAPACK LIBRARY
+# # SETTING VARIABLES:
+# # LAPACK_LIB, LAPACK_DIR
+# if ( NOT DEFINED LAPACK_DIR)
+#   message(STATUS "LOOKING FOR LAPACK LIBRARIES")
+#   find_package(LAPACK REQUIRED)
+#   if (LAPACK_FOUND)
+#     message(VERBOSE "LAPACK LIBRARIES: ${LAPACK_LIBRARIES}")
+#     list(GET LAPACK_LIBRARIES 0 LAPACK_LIB)
+#     message(VERBOSE "LAPACK LIB SELECTED: ${LAPACK_LIB}")
+#     get_filename_component(LAPACK_DIR "${LAPACK_LIB}" DIRECTORY)
+#   else()
+#     # print error message
+#     MESSAGE( SEND_ERROR  "+ LAPACK LIBRARY NOT FOUND: Pass the full path of the directory containg it with" )
+#     MESSAGE( SEND_ERROR  "+ -DLAPACK_DIR= absolute path for lapack ")
+#     MESSAGE( FATAL_ERROR "++++++++++++++++++++++++++++++++++++++++++++++" )
+#   endif()
+# else()
+#   message(STATUS "DIRECTORY PATH FOR LAPACK: ${LAPACK_DIR}")
+# endif()
 
 
 ###########
@@ -108,15 +108,15 @@ SET( CMAKE_Fortran_MODULE_DIRECTORY ${MODS_BINARY_DIR} )
 
 
 # get all sources
-FILE( GLOB SOURCES src/*.f90 )
+FILE( GLOB SOURCES src_abs_vect/*.f90 )
 SET( linalg_SOURCES ${SOURCES} )
 # create objects
 MESSAGE("srs files ${linalg_SOURCES} ")
 ADD_LIBRARY( linalg STATIC ${linalg_SOURCES} )
 
 
-add_executable ( test test/main.f90)
-target_link_libraries( test  linalg  lapack blas)
+add_executable ( test test/main_dvector.f90)
+target_link_libraries( test  linalg)
 
 message("**")
 
